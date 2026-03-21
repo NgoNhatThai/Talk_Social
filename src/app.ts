@@ -8,6 +8,7 @@ import type { Application } from './declarations'
 import { logError } from './hooks/log-error'
 import { connectToMongo } from './config/mongodb/mongodb-cloud'
 import { services } from './services/index'
+import { authentication } from './authentication'
 
 const app: Application = koa(feathers())
 
@@ -29,6 +30,7 @@ const mongoPromise = connectToMongo().then(({ db }) => db)
 // Cast to any because of version mismatch between 'mongodb' (6.x) and 'mongoose/mongodb' (7.x)
 app.set('mongodbClient', mongoPromise as any)
 
+app.configure(authentication)
 app.configure(services)
 
 // Register hooks that run on all service methods
