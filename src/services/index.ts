@@ -1,3 +1,4 @@
+import { tokens } from './tokens/tokens'
 import { videos } from './videos/videos'
 import { messages } from './messages/messages'
 import { rooms } from './rooms/rooms'
@@ -7,6 +8,7 @@ import { health } from './health/health'
 import type { Application } from '../declarations'
 
 export const services = (app: Application) => {
+  app.configure(tokens)
   app.configure(videos)
   app.configure(messages)
   app.configure(rooms)

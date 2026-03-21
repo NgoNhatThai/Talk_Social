@@ -15,8 +15,8 @@ import {
 
 export const messages = (app: Application) => {
   app.use('messages', new MessageService(getOptions(app)), {
-    methods: ['find', 'get', 'create', 'patch', 'remove'],
-    events: []
+    methods: ['find', 'get', 'create', 'patch', 'remove', 'typing', 'stopTyping'],
+    events: ['typing', 'stopTyping']
   })
 
   app.service('messages').hooks({

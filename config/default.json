@@ -23,7 +23,7 @@
       "audience": "https://yourdomain.com",
       "issuer": "feathers",
       "algorithm": "HS256",
-      "expiresIn": "3d"
+      "expiresIn": "15m"
     },
     "local": {
       "usernameField": "phoneNumber",

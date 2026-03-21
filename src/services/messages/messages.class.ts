@@ -15,7 +15,24 @@ export class MessageService<ServiceParams extends Params = MessageParams> extend
   MessageData,
   MessageParams,
   MessagePatch
-> {}
+> {
+  async typing(data: any, params?: Params) {
+    const authParams = params as MessageParams
+    return {
+      userId: authParams?.user?._id,
+      roomId: data.roomId,
+      username: authParams?.user?.username
+    }
+  }
+
+  async stopTyping(data: any, params?: Params) {
+    const authParams = params as MessageParams
+    return {
+      userId: authParams?.user?._id,
+      roomId: data.roomId
+    }
+  }
+}
 
 export const getOptions = (app: Application): MongoDBAdapterOptions => {
   return {
