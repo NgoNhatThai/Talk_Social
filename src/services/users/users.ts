@@ -50,7 +50,20 @@ export const users = (app: Application) => {
       remove: []
     },
     after: {
-      all: []
+      all: [],
+      get: [
+        async (context: any) => {
+          // Populate videos for this user
+          const result = context.result as any
+          if (result && result._id) {
+            const videos = await context.app.service('videos').find({
+              query: { userId: result._id },
+              paginate: false
+            })
+            result.videos = videos
+          }
+        }
+      ]
     },
     error: {
       all: []
