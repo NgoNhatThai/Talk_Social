@@ -26,8 +26,7 @@ export const users = (app: Application) => {
   app.service('users').hooks({
     around: {
       all: [
-        schemaHooks.resolveExternal(userExternalResolver),
-        schemaHooks.resolveData(userResolver)
+        schemaHooks.resolveExternal(userExternalResolver)
       ],
       find: [authHooks.authenticate('jwt')],
       get: [authHooks.authenticate('jwt')],
@@ -45,8 +44,8 @@ export const users = (app: Application) => {
           }
         }
       ],
-      create: [userDataValidator, localHooks.hashPassword('password')],
-      patch: [userPatchValidator, localHooks.hashPassword('password')],
+      create: [schemaHooks.resolveData(userDataResolver), userDataValidator, localHooks.hashPassword('password')],
+      patch: [schemaHooks.resolveData(userPatchResolver), userPatchValidator, localHooks.hashPassword('password')],
       remove: []
     },
     after: {
