@@ -51,6 +51,7 @@
     "@feathersjs/koa": "^5.0.42",
     "@feathersjs/mongodb": "^5.0.42",
     "@feathersjs/schema": "^5.0.42",
+    "@feathersjs/socketio": "^5.0.42",
     "@feathersjs/transport-commons": "^5.0.42",
     "@feathersjs/typebox": "^5.0.42",
     "@types/bcryptjs": "^3.0.0",

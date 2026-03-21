@@ -1,0 +1,61 @@
+import { Type, getValidator, querySyntax, ObjectIdSchema } from '@feathersjs/typebox'
+import type { Static } from '@feathersjs/typebox'
+import { dataValidator, queryValidator } from '../../validators'
+import type { HookContext } from '../../declarations'
+import { resolve } from '@feathersjs/schema'
+
+// Main data model schema
+export const friendRequestSchema = Type.Object(
+  {
+    _id: ObjectIdSchema(),
+    fromUserId: ObjectIdSchema(),
+    toUserId: ObjectIdSchema(),
+    status: Type.Enum({
+      pending: 'pending',
+      accepted: 'accepted',
+      rejected: 'rejected'
+    })
+  },
+  { $id: 'FriendRequest', additionalProperties: false }
+)
+export type FriendRequest = Static<typeof friendRequestSchema>
+export const friendRequestValidator = getValidator(friendRequestSchema, dataValidator)
+export const friendRequestResolver = resolve<FriendRequest, HookContext>({})
+
+export const friendRequestExternalResolver = resolve<FriendRequest, HookContext>({})
+
+// Schema for creating new entries
+export const friendRequestDataSchema = Type.Pick(friendRequestSchema, ['toUserId', 'fromUserId', 'status'], {
+  $id: 'FriendRequestData'
+})
+export type FriendRequestData = Static<typeof friendRequestDataSchema>
+export const friendRequestDataValidator = getValidator(friendRequestDataSchema, dataValidator)
+export const friendRequestDataResolver = resolve<FriendRequestData, HookContext>({
+  properties: {
+    fromUserId: async (_value: any, _data: any, context: any) => context.params.user?._id,
+    status: async () => 'pending'
+  }
+})
+
+// Schema for updating existing entries
+export const friendRequestPatchSchema = Type.Partial(
+  Type.Pick(friendRequestSchema, ['status']),
+  { $id: 'FriendRequestPatch' }
+)
+export type FriendRequestPatch = Static<typeof friendRequestPatchSchema>
+export const friendRequestPatchValidator = getValidator(friendRequestPatchSchema, dataValidator)
+export const friendRequestPatchResolver = resolve<FriendRequestPatch, HookContext>({})
+
+// Schema for allowed query properties
+export const friendRequestQueryProperties = Type.Pick(friendRequestSchema, ['_id', 'fromUserId', 'toUserId', 'status'])
+export const friendRequestQuerySchema = Type.Intersect(
+  [
+    querySyntax(friendRequestQueryProperties),
+    // Add additional query properties here
+    Type.Object({}, { additionalProperties: false })
+  ],
+  { additionalProperties: false }
+)
+export type FriendRequestQuery = Static<typeof friendRequestQuerySchema>
+export const friendRequestQueryValidator = getValidator(friendRequestQuerySchema, queryValidator)
+export const friendRequestQueryResolver = resolve<FriendRequestQuery, HookContext>({})
