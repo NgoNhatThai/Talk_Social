@@ -14,12 +14,12 @@
     "entity": "user",
     "service": "users",
     "secret": "FEATHERS_SECRET",
+    "header": "Authorization",
     "authStrategies": [
       "jwt",
       "local"
     ],
     "jwtOptions": {
-      "header": "Authorization",
       "audience": "https://yourdomain.com",
       "issuer": "feathers",
       "algorithm": "HS256",

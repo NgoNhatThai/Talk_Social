@@ -22,15 +22,21 @@ export const tokens = (app: Application) => {
   app.service('tokens').hooks({
     around: {
       all: [
-        schemaHooks.resolveExternal(tokenExternalResolver)
+        schemaHooks.resolveExternal(tokenExternalResolver),
+        schemaHooks.resolveResult(tokenResolver)
       ]
     },
     before: {
-      all: [schemaHooks.resolveData(tokenResolver)],
-      find: [tokenQueryValidator, tokenQueryResolver as any],
-      get: [tokenQueryValidator, tokenQueryResolver as any],
-      create: [tokenDataValidator, tokenDataResolver as any],
-      patch: [tokenPatchValidator, tokenPatchResolver as any],
+      all: [],
+      find: [// tokenQueryValidator, 
+        schemaHooks.resolveQuery(tokenQueryResolver)],
+      get: [// tokenQueryValidator, 
+        schemaHooks.resolveQuery(tokenQueryResolver)],
+      create: [
+        schemaHooks.resolveData(tokenDataResolver),
+        // tokenDataValidator
+      ],
+      patch: [tokenPatchValidator, schemaHooks.resolveData(tokenPatchResolver)],
       remove: []
     }
   })

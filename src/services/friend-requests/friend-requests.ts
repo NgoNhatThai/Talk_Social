@@ -29,17 +29,26 @@ export const friendRequests = (app: Application) => {
     },
     before: {
       all: [],
-      find: [friendRequestQueryValidator, friendRequestQueryResolver as any],
-      get: [friendRequestQueryValidator, friendRequestQueryResolver as any],
-      create: [friendRequestDataValidator, friendRequestDataResolver as any],
+      find: [
+        // friendRequestQueryValidator,
+        schemaHooks.resolveQuery(friendRequestQueryResolver)
+      ],
+      get: [
+        // friendRequestQueryValidator,
+        schemaHooks.resolveQuery(friendRequestQueryResolver)
+      ],
+      create: [
+        schemaHooks.resolveData(friendRequestDataResolver),
+        friendRequestDataValidator
+      ],
       patch: [
+        schemaHooks.resolveData(friendRequestPatchResolver),
         friendRequestPatchValidator,
-        friendRequestPatchResolver as any,
         async (context: any) => {
           // Only the receiver can accept/reject the request
           const request = await context.service.get(context.id as string)
           if (request.toUserId.toString() !== context.params.user?._id.toString()) {
-             throw new Error('Not authorized to accept this friend request')
+            throw new Error('Not authorized to accept this friend request')
           }
         }
       ],

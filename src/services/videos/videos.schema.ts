@@ -12,7 +12,7 @@ export const videoSchema = Type.Object(
     url: Type.String({ format: 'uri' }),
     title: Type.Optional(Type.String())
   },
-  { $id: 'Video', additionalProperties: false }
+  { $id: 'Video', additionalProperties: true }
 )
 export type Video = Static<typeof videoSchema>
 export const videoValidator = getValidator(videoSchema, dataValidator)
@@ -51,9 +51,9 @@ export const videoQuerySchema = Type.Intersect(
   [
     querySyntax(videoQueryProperties),
     // Add additional query properties here
-    Type.Object({}, { additionalProperties: false })
+    Type.Object({}, { additionalProperties: true })
   ],
-  { additionalProperties: false }
+  { additionalProperties: true }
 )
 export type VideoQuery = Static<typeof videoQuerySchema>
 export const videoQueryValidator = getValidator(videoQuerySchema, queryValidator)

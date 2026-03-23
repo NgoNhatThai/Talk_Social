@@ -30,8 +30,8 @@ export const messages = (app: Application) => {
     before: {
       all: [],
       find: [
-        messageQueryValidator,
-        messageQueryResolver as any,
+        // messageQueryValidator,
+        schemaHooks.resolveQuery(messageQueryResolver),
         async (context: any) => {
           // Users should only see messages in rooms they are part of
           const roomId = context.params.query?.roomId
@@ -44,10 +44,11 @@ export const messages = (app: Application) => {
           }
         }
       ],
-      get: [messageQueryValidator, messageQueryResolver as any],
+      get: [// messageQueryValidator, 
+        schemaHooks.resolveQuery(messageQueryResolver)],
       create: [
         messageDataValidator,
-        messageDataResolver as any,
+        schemaHooks.resolveData(messageDataResolver),
         async (context: any) => {
           // Validate user belongs to the room they are sending to
           const room = await context.app.service('rooms').get(context.data.roomId)
@@ -59,7 +60,7 @@ export const messages = (app: Application) => {
       ],
       patch: [
         messagePatchValidator,
-        messagePatchResolver as any,
+        schemaHooks.resolveData(messagePatchResolver),
         async (context: any) => {
           // Add current user to readBy array if 'seen' behavior
           if (context.data && context.data.readBy) {

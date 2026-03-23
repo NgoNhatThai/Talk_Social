@@ -38,17 +38,24 @@ export const videos = (app: Application) => {
   app.service('videos').hooks({
     around: {
       all: [
-        authHooks.authenticate('jwt'),
+        async (context, next) => {
+          if (context.params.provider) {
+            return authHooks.authenticate('jwt')(context, next)
+          }
+          return next()
+        },
         schemaHooks.resolveExternal(videoExternalResolver),
-        schemaHooks.resolveData(videoResolver)
+        schemaHooks.resolveResult(videoResolver)
       ]
     },
     before: {
       all: [],
-      find: [videoQueryValidator, videoQueryResolver as any],
-      get: [videoQueryValidator, videoQueryResolver as any],
-      create: [videoDataValidator, videoDataResolver as any],
-      patch: [videoPatchValidator, videoPatchResolver as any],
+      find: [// videoQueryValidator, 
+        schemaHooks.resolveQuery(videoQueryResolver)],
+      get: [// videoQueryValidator, 
+        schemaHooks.resolveQuery(videoQueryResolver)],
+      create: [videoDataValidator, schemaHooks.resolveData(videoDataResolver)],
+      patch: [videoPatchValidator, schemaHooks.resolveData(videoPatchResolver)],
       remove: []
     }
   })

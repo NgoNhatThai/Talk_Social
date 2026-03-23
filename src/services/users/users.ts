@@ -36,7 +36,12 @@ export const users = (app: Application) => {
     },
     before: {
       all: [],
-      find: [userQueryValidator],
+      find: [
+        async (context) => {
+          console.log('[DEBUG] Find Users query:', JSON.stringify(context.params.query, null, 2))
+        },
+        // userQueryValidator
+      ],
       get: [
         async (context) => {
           if (context.id === 'me' && context.params.user) {
@@ -44,12 +49,19 @@ export const users = (app: Application) => {
           }
         }
       ],
-      create: [schemaHooks.resolveData(userDataResolver), userDataValidator, localHooks.hashPassword('password')],
+      create: [
+        schemaHooks.resolveData(userDataResolver),
+        userDataValidator,
+        localHooks.hashPassword('password')
+      ],
       patch: [schemaHooks.resolveData(userPatchResolver), userPatchValidator, localHooks.hashPassword('password')],
       remove: []
     },
     after: {
       all: [],
+      find: [
+        
+      ],
       get: [
         async (context: any) => {
           // Populate videos for this user

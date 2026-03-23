@@ -30,8 +30,8 @@ export const rooms = (app: Application) => {
     before: {
       all: [],
       find: [
-        roomQueryValidator,
-        roomQueryResolver as any,
+        // roomQueryValidator,
+        schemaHooks.resolveQuery(roomQueryResolver),
         async (context: any) => {
           // Users should only see rooms they are part of
           if (!context.params.query) context.params.query = {}
@@ -39,8 +39,8 @@ export const rooms = (app: Application) => {
         }
       ],
       get: [
-        roomQueryValidator,
-        roomQueryResolver as any,
+        // roomQueryValidator,
+        schemaHooks.resolveQuery(roomQueryResolver),
         async (context: any) => {
           // Ensure the user is a participant of the room they are trying to get
           const room = await context.service.get(context.id as string)
@@ -50,8 +50,14 @@ export const rooms = (app: Application) => {
           }
         }
       ],
-      create: [roomDataValidator, roomDataResolver as any],
-      patch: [roomPatchValidator, roomPatchResolver as any],
+      create: [
+        roomDataValidator,
+        schemaHooks.resolveData(roomDataResolver)
+      ],
+      patch: [
+        roomPatchValidator,
+        schemaHooks.resolveData(roomPatchResolver)
+      ],
       remove: []
     }
   })

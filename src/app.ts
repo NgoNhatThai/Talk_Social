@@ -7,6 +7,7 @@ import socketio from '@feathersjs/socketio'
 import { configurationValidator } from './configuration'
 import type { Application } from './declarations'
 import { logError } from './hooks/log-error'
+import { wrapResult } from './hooks/wrap-result'
 import { connectToMongo } from './config/mongodb/mongodb-cloud'
 import { services } from './services/index'
 import { authentication } from './authentication'
@@ -40,7 +41,7 @@ app.configure(channels)
 // Register hooks that run on all service methods
 app.hooks({
   around: {
-    all: [logError]
+    all: [logError, wrapResult]
   },
   before: {},
   after: {},

@@ -25,7 +25,13 @@ export const friendRequestResolver = resolve<FriendRequest, HookContext>({})
 export const friendRequestExternalResolver = resolve<FriendRequest, HookContext>({})
 
 // Schema for creating new entries
-export const friendRequestDataSchema = Type.Pick(friendRequestSchema, ['toUserId', 'fromUserId', 'status'], {
+export const friendRequestDataSchema = Type.Intersect([
+  Type.Pick(friendRequestSchema, ['toUserId']),
+  Type.Partial(Type.Pick(friendRequestSchema, ['fromUserId', 'status'])),
+  Type.Object({
+    phoneNumber: Type.Optional(Type.String())
+  })
+], {
   $id: 'FriendRequestData'
 })
 export type FriendRequestData = Static<typeof friendRequestDataSchema>
@@ -33,7 +39,20 @@ export const friendRequestDataValidator = getValidator(friendRequestDataSchema, 
 export const friendRequestDataResolver = resolve<FriendRequestData, HookContext>({
   properties: {
     fromUserId: async (_value: any, _data: any, context: any) => context.params.user?._id,
-    status: async () => 'pending'
+    status: async () => 'pending',
+    toUserId: async (value: any, data: any, context: any) => {
+       if (value) return value
+       if (data.phoneNumber) {
+         const users = await context.app.service('users').find({
+            query: { phoneNumber: data.phoneNumber, $limit: 1 },
+            paginate: false
+         }) as any
+         const user = users[0]
+         if (!user) throw new Error('User not found with this phone number')
+         return user._id
+       }
+       return value
+    }
   }
 })
 

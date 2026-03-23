@@ -9,8 +9,11 @@ export const logError = async (context: HookContext, next: NextFunction) => {
     logger.error(error.stack)
 
     // Log validation errors
+    if (error.errors) {
+      logger.error('AJV Validation Error: %O', error.errors)
+    }
     if (error.data) {
-      logger.error('Data: %O', error.data)
+      logger.error('Error Data: %O', error.data)
     }
 
     throw error

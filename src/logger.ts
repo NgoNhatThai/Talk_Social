@@ -5,6 +5,14 @@ import { createLogger, format, transports } from 'winston'
 export const logger = createLogger({
   // To see more detailed errors, change this to 'debug'
   level: 'info',
-  format: format.combine(format.splat(), format.simple()),
+  format: format.combine(
+    format.timestamp(),
+    format.colorize(),
+    format.splat(),
+    format.printf(({ timestamp, level, message, ...meta }) => {
+      const metaStr = Object.keys(meta).length ? '\n' + JSON.stringify(meta, null, 2) : ''
+      return `[${timestamp}] ${level}: ${message}${metaStr}`
+    })
+  ),
   transports: [new transports.Console()]
 })
