@@ -1,4 +1,4 @@
-import { AuthenticationService, JWTStrategy } from '@feathersjs/authentication'
+import { AuthenticationService, JWTStrategy, hooks as authHooks } from '@feathersjs/authentication'
 import { LocalStrategy } from '@feathersjs/authentication-local'
 import type { Application } from './declarations'
 import { randomBytes } from 'node:crypto'
@@ -92,6 +92,7 @@ class MyAuthenticationService extends AuthenticationService {
   }
 
   async refresh(data: any, params: any) {
+    console.log('[DEBUG] Refresh called with:', JSON.stringify(data, null, 2))
     const { refreshToken } = data
     if (!refreshToken) {
       throw new Error('Refresh token is required')
@@ -160,6 +161,20 @@ export const authentication = (app: Application) => {
 
   app.use('authentication', authService, {
     methods: ['create', 'remove', 'refresh']
+  })
+
+  app.service('authentication').hooks({
+    before: {
+      all: [],
+      // Ensure 'refresh' is public and doesn't fail if an expired header is present
+      refresh: [
+        async (context) => {
+           delete context.params.authentication
+           delete context.params.user
+        }
+      ],
+      remove: [authHooks.authenticate('jwt')]
+    }
   })
 }
 

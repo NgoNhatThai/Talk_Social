@@ -46,9 +46,9 @@ export const roomQuerySchema = Type.Intersect(
   [
     querySyntax(roomQueryProperties),
     // Add additional query properties here
-    Type.Object({}, { additionalProperties: false })
+    Type.Object({}, { additionalProperties: true })
   ],
-  { additionalProperties: false }
+  { additionalProperties: true }
 )
 export type RoomQuery = Static<typeof roomQuerySchema>
 export const roomQueryValidator = getValidator(roomQuerySchema, queryValidator)

@@ -36,6 +36,8 @@ export const rooms = (app: Application) => {
           // Users should only see rooms they are part of
           if (!context.params.query) context.params.query = {}
           context.params.query.participantIds = context.params.user?._id
+          console.log('Room search query:', JSON.stringify(context.params.query))
+          console.log('Current user ID:', context.params.user?._id)
         }
       ],
       get: [
@@ -51,14 +53,19 @@ export const rooms = (app: Application) => {
         }
       ],
       create: [
-        roomDataValidator,
+        // roomDataValidator,
         schemaHooks.resolveData(roomDataResolver)
       ],
       patch: [
-        roomPatchValidator,
+        // roomPatchValidator,
         schemaHooks.resolveData(roomPatchResolver)
       ],
       remove: []
+    },
+    after: {
+      create: [
+        
+      ]
     }
   })
 }

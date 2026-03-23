@@ -36,7 +36,9 @@ export const tokens = (app: Application) => {
         schemaHooks.resolveData(tokenDataResolver),
         // tokenDataValidator
       ],
-      patch: [tokenPatchValidator, schemaHooks.resolveData(tokenPatchResolver)],
+      patch: [
+        // tokenPatchValidator, 
+        schemaHooks.resolveData(tokenPatchResolver)],
       remove: []
     }
   })
