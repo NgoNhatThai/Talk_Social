@@ -24,8 +24,7 @@ export const messages = (app: Application) => {
     around: {
       all: [
         authHooks.authenticate('jwt'),
-        schemaHooks.resolveExternal(messageExternalResolver),
-        schemaHooks.resolveData(messageResolver)
+        schemaHooks.resolveExternal(messageExternalResolver)
       ]
     },
     before: {
@@ -34,23 +33,19 @@ export const messages = (app: Application) => {
         // messageQueryValidator,
         schemaHooks.resolveQuery(messageQueryResolver),
         async (context: any) => {
-          console.log('Message find hook triggered', context.params.query)
           // Users should only see messages in rooms they are part of
           const roomId = context.params.query?.roomId
           if (roomId) {
             const castRoomId = typeof roomId === 'string' ? new ObjectId(roomId) : roomId
             context.params.query.roomId = castRoomId
             
-            console.log(`[DEBUG find] Checking room ${castRoomId} permissions for user ${context.params.user?._id}`)
             // Use _get to bypass broken rooms hooks that cause infinite recursion
             // Clear query to avoid filtering the room record by the message roomId
             const room = await (context.app.service('rooms') as any)._get(castRoomId, {
               ...context.params,
               query: {}
             })
-            console.log(`[DEBUG find] Room found: ${!!room}, participantIds: ${room?.participantIds?.length}`)
             const isParticipant = room.participantIds.some((id: any) => id.toString() === context.params.user?._id.toString())
-            console.log(`[DEBUG find] User ${context.params.user?._id} participant: ${isParticipant}`)
             if (!isParticipant) {
               throw new Error('Not authorized to see messages in this room')
             }
@@ -67,12 +62,9 @@ export const messages = (app: Application) => {
             context.data.roomId = new ObjectId(context.data.roomId)
           }
           
-          console.log(`[DEBUG create] Checking room ${context.data.roomId} permissions for user ${context.params.user?._id}`)
           // Use _get to bypass broken rooms hooks that cause infinite recursion
           const room = await (context.app.service('rooms') as any)._get(context.data.roomId, context.params)
-          console.log(`[DEBUG create] Room found: ${!!room}, participantIds: ${room?.participantIds?.length}`)
           const isParticipant = room.participantIds.some((id: any) => id.toString() === context.params.user?._id.toString())
-          console.log(`[DEBUG create] User ${context.params.user?._id} participant: ${isParticipant}`)
           if (!isParticipant) {
             throw new Error('Not authorized to send messages to this room')
           }
@@ -102,6 +94,9 @@ export const messages = (app: Application) => {
           await (context.app.service('rooms') as any)._patch(result.roomId, {
             lastMessageId: result._id
           }, context.params)
+          
+          // Note: Feathers automatically emits the 'created' event after this hook finishes.
+          // The event and payload are broadcast to the channels defined in src/channels.ts
         }
       ]
     }
