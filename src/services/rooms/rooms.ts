@@ -35,9 +35,7 @@ export const rooms = (app: Application) => {
         async (context: any) => {
           // Users should only see rooms they are part of
           if (!context.params.query) context.params.query = {}
-          context.params.query.participantIds = context.params.user?._id
-          console.log('Room search query:', JSON.stringify(context.params.query))
-          console.log('Current user ID:', context.params.user?._id)
+          context.params.query.participantIds = context.params.user?._id.toString()
         }
       ],
       get: [

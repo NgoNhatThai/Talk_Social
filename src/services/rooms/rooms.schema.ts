@@ -7,14 +7,14 @@ import { resolve } from '@feathersjs/schema'
 // Main data model schema
 export const roomSchema = Type.Object(
   {
-    _id: ObjectIdSchema(),
-    participantIds: Type.Array(ObjectIdSchema()),
+    _id: Type.String(),
+    participantIds: Type.Array(Type.String()),
     type: Type.Enum({
       direct: 'direct',
       group: 'group'
     }),
     name: Type.Optional(Type.String()),
-    lastMessageId: Type.Optional(ObjectIdSchema())
+    lastMessageId: Type.Optional(Type.String())
   },
   { $id: 'Room', additionalProperties: false }
 )
