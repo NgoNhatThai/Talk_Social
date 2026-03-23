@@ -43,7 +43,8 @@ export const rooms = (app: Application) => {
         schemaHooks.resolveQuery(roomQueryResolver),
         async (context: any) => {
           // Ensure the user is a participant of the room they are trying to get
-          const room = await context.service.get(context.id as string)
+          // Use _get to bypass hooks to avoid infinite recursion
+          const room = await (context.service as any)._get(context.id as string, context.params)
           const isParticipant = (room as any).participantIds.some((id: any) => id.toString() === context.params.user?._id.toString())
           if (!isParticipant) {
              throw new Error('Not authorized to access this room')
