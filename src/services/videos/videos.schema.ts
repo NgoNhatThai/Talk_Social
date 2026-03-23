@@ -10,7 +10,8 @@ export const videoSchema = Type.Object(
     _id: ObjectIdSchema(),
     userId: ObjectIdSchema(),
     url: Type.String({ format: 'uri' }),
-    title: Type.Optional(Type.String())
+    title: Type.Optional(Type.String()),
+    createdAt: Type.String()
   },
   { $id: 'Video', additionalProperties: true }
 )
@@ -26,14 +27,15 @@ export const videoExternalResolver = resolve<Video, HookContext>({
 })
 
 // Schema for creating new entries
-export const videoDataSchema = Type.Pick(videoSchema, ['url', 'title', 'userId'], {
+export const videoDataSchema = Type.Pick(videoSchema, ['url', 'title', 'userId', 'createdAt'], {
   $id: 'VideoData'
 })
 export type VideoData = Static<typeof videoDataSchema>
 export const videoDataValidator = getValidator(videoDataSchema, dataValidator)
 export const videoDataResolver = resolve<VideoData, HookContext>({
   properties: {
-    userId: async (_value: any, _data: any, context: any) => context.params.user?._id
+    userId: async (_value: any, _data: any, context: any) => context.params.user?._id,
+    createdAt: async () => new Date().toISOString()
   }
 })
 

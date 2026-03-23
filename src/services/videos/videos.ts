@@ -54,8 +54,12 @@ export const videos = (app: Application) => {
         schemaHooks.resolveQuery(videoQueryResolver)],
       get: [// videoQueryValidator, 
         schemaHooks.resolveQuery(videoQueryResolver)],
-      create: [videoDataValidator, schemaHooks.resolveData(videoDataResolver)],
-      patch: [videoPatchValidator, schemaHooks.resolveData(videoPatchResolver)],
+      create: [
+        // videoDataValidator, 
+        schemaHooks.resolveData(videoDataResolver)],
+      patch: [
+        // videoPatchValidator, 
+        schemaHooks.resolveData(videoPatchResolver)],
       remove: []
     }
   })
