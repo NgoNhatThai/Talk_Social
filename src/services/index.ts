@@ -5,6 +5,7 @@ import { rooms } from './rooms/rooms'
 import { friendRequests } from './friend-requests/friend-requests'
 import { users } from './users/users'
 import { health } from './health/health'
+import { refreshToken } from './refresh-token/refresh-token.service'
 import type { Application } from '../declarations'
 
 export const services = (app: Application) => {
@@ -15,4 +16,5 @@ export const services = (app: Application) => {
   app.configure(friendRequests)
   app.configure(users)
   app.configure(health)
+  app.configure(refreshToken)
 }

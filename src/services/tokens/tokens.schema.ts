@@ -63,7 +63,7 @@ export const tokenPatchResolver = resolve<TokenPatch, HookContext>({
 })
 
 // Schema for allowed query properties
-export const tokenQueryProperties = Type.Pick(tokenSchema, ['_id', 'token', 'userId'])
+export const tokenQueryProperties = Type.Pick(tokenSchema, ['_id', 'token', 'userId', 'expiresAt'])
 export const tokenQuerySchema = Type.Intersect(
   [
     querySyntax(tokenQueryProperties),

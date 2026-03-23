@@ -90,54 +90,6 @@ class MyAuthenticationService extends AuthenticationService {
 
     return options
   }
-
-  async refresh(data: any, params: any) {
-    console.log('[DEBUG] Refresh called with:', JSON.stringify(data, null, 2))
-    const { refreshToken } = data
-    if (!refreshToken) {
-      throw new Error('Refresh token is required')
-    }
-
-    const tokenEntries = await this.app.service('tokens').find({
-      query: {
-        token: refreshToken,
-        expiresAt: { $gt: new Date().toISOString() }
-      },
-      paginate: false
-    })
-
-    // Handle potential wrapping of find result
-    const resultArr = (tokenEntries as any).data ? (tokenEntries as any).data : tokenEntries
-    const tokenEntry = Array.isArray(resultArr) ? resultArr[0] : (resultArr as any).data?.[0]
-    
-    if (!tokenEntry) {
-      throw new Error('Invalid or expired refresh token')
-    }
-
-    const userResponse = await this.app.service('users').get(tokenEntry.userId)
-    const user = (userResponse as any).data ? (userResponse as any).data : userResponse
-    
-    // Create new access token
-    const accessToken = await this.createAccessToken({ sub: (user._id || user.id).toString() })
-    
-    // Rotate refresh token (revoke old, create new)
-    await this.app.service('tokens').remove(tokenEntry._id)
-    const newRefreshToken = randomBytes(40).toString('hex')
-    const expiresAt = new Date()
-    expiresAt.setDate(expiresAt.getDate() + 3)
-
-    await this.app.service('tokens').create({
-      token: newRefreshToken,
-      userId: (user._id || user.id).toString(),
-      expiresAt: expiresAt.toISOString()
-    })
-
-    return {
-      accessToken,
-      refreshToken: newRefreshToken,
-      user
-    }
-  }
 }
 
 class MyLocalStrategy extends LocalStrategy {
@@ -160,19 +112,12 @@ export const authentication = (app: Application) => {
   authService.register('local', new MyLocalStrategy())
 
   app.use('authentication', authService, {
-    methods: ['create', 'remove', 'refresh']
+    methods: ['create', 'remove']
   })
 
   app.service('authentication').hooks({
     before: {
       all: [],
-      // Ensure 'refresh' is public and doesn't fail if an expired header is present
-      refresh: [
-        async (context) => {
-           delete context.params.authentication
-           delete context.params.user
-        }
-      ],
       remove: [authHooks.authenticate('jwt')]
     }
   })
