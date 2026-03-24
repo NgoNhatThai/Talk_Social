@@ -51,7 +51,7 @@ export const users = (app: Application) => {
       ],
       create: [
         schemaHooks.resolveData(userDataResolver),
-        userDataValidator,
+        // userDataValidator,
         localHooks.hashPassword('password')
       ],
       patch: [schemaHooks.resolveData(userPatchResolver), userPatchValidator, localHooks.hashPassword('password')],

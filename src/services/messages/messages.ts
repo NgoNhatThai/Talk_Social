@@ -92,11 +92,38 @@ export const messages = (app: Application) => {
           const result = context.result as any
           // Use _patch to avoid any hook issues in rooms service
           await (context.app.service('rooms') as any)._patch(result.roomId, {
-            lastMessageId: result._id
-          }, context.params)
+            lastMessageId: result._id,
+            lastMessageAt: result.createdAt || new Date().toISOString(),
+            lastMessageContent: result.text,
+            lastMessageSenderId: result.senderId,
+            lastMessageReadBy: result.readBy
+          }, {
+            ...context.params,
+            provider: undefined // Ensure internal call
+          })
           
           // Note: Feathers automatically emits the 'created' event after this hook finishes.
           // The event and payload are broadcast to the channels defined in src/channels.ts
+        }
+      ],
+      patch: [
+        async (context: any) => {
+           // Sync readBy to room if this is the last message
+           const result = context.result as any
+           if (context.data && context.data.readBy) {
+              const room = await (context.app.service('rooms') as any)._get(result.roomId, {
+                 ...context.params,
+                 provider: undefined
+              })
+              if (room.lastMessageId?.toString() === result._id.toString()) {
+                 await (context.app.service('rooms') as any)._patch(result.roomId, {
+                   lastMessageReadBy: context.data.readBy
+                 }, {
+                   ...context.params,
+                   provider: undefined
+                 })
+              }
+           }
         }
       ]
     }

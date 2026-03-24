@@ -35,7 +35,16 @@ export const rooms = (app: Application) => {
         async (context: any) => {
           // Users should only see rooms they are part of
           if (!context.params.query) context.params.query = {}
-          context.params.query.participantIds = context.params.user?._id.toString()
+          
+          // Only force participantIds if not already specified or if it's an external provider call
+          if (context.params.provider && !context.params.query.participantIds) {
+            context.params.query.participantIds = context.params.user?._id.toString()
+          }
+          
+          // Default sorting: most recent lastMessageAt first
+          if (!context.params.query.$sort) {
+            context.params.query.$sort = { lastMessageAt: -1 }
+          }
         }
       ],
       get: [
@@ -62,8 +71,73 @@ export const rooms = (app: Application) => {
       remove: []
     },
     after: {
-      create: [
-        
+      create: [],
+      find: [
+        async (context: any) => {
+          const { result } = context
+          const rooms = result.data || result
+          
+          if (!Array.isArray(rooms)) return context
+
+          const populateLastMessage = async (room: any) => {
+             if (room.lastMessageId) {
+                try {
+                   // Use _get to bypass hooks in messages service if needed
+                   const message = await context.app.service('messages').get(room.lastMessageId, {
+                      ...context.params,
+                      provider: undefined
+                   })
+                   room.lastMessage = message
+                   room.lastMessageContent = message.text
+                   room.lastMessageSenderId = message.senderId
+                   room.lastMessageReadBy = message.readBy
+                } catch (err) {
+                   // Last message might be deleted or not found
+                }
+             }
+             return room
+          }
+
+          if (result.data) {
+             result.data = await Promise.all(result.data.map(populateLastMessage))
+          } else {
+             context.result = await Promise.all(result.map(populateLastMessage))
+          }
+        }
+      ],
+      get: [
+        async (context: any) => {
+          const room = context.result as any
+          if (room.lastMessageId) {
+             try {
+                const message = await context.app.service('messages').get(room.lastMessageId, {
+                   ...context.params,
+                   provider: undefined
+                })
+                room.lastMessage = message
+                room.lastMessageContent = message.text
+                room.lastMessageSenderId = message.senderId
+                room.lastMessageReadBy = message.readBy
+             } catch (err) {}
+          }
+        }
+      ],
+      patch: [
+        async (context: any) => {
+          const room = context.result as any
+          if (room.lastMessageId) {
+             try {
+                const message = await context.app.service('messages').get(room.lastMessageId, {
+                   ...context.params,
+                   provider: undefined
+                })
+                room.lastMessage = message
+                room.lastMessageContent = message.text
+                room.lastMessageSenderId = message.senderId
+                room.lastMessageReadBy = message.readBy
+             } catch (err) {}
+          }
+        }
       ]
     }
   })

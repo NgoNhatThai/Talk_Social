@@ -14,9 +14,10 @@ export const roomSchema = Type.Object(
       group: 'group'
     }),
     name: Type.Optional(Type.String()),
-    lastMessageId: Type.Optional(Type.String())
+    lastMessageId: Type.Optional(Type.String()),
+    lastMessageAt: Type.Optional(Type.String())
   },
-  { $id: 'Room', additionalProperties: false }
+  { $id: 'Room', additionalProperties: true }
 )
 export type Room = Static<typeof roomSchema>
 export const roomValidator = getValidator(roomSchema, dataValidator)

@@ -10,6 +10,7 @@ export class RefreshTokenService {
       throw new Error('Refresh token is required');
     }
 
+    // Truy vấn token entry
     const tokenEntries = await this.app.service('tokens').find({
       query: {
         token: refreshToken,
@@ -18,18 +19,29 @@ export class RefreshTokenService {
       paginate: false
     });
 
-    const tokens = Array.isArray(tokenEntries) ? tokenEntries : (tokenEntries as any).data || [];
+    // UnWrap if needed (since wrapResult hook might have run on internal call if not careful, 
+    // though usually provider is null for internal calls)
+    const tokens = (tokenEntries as any).data || (Array.isArray(tokenEntries) ? tokenEntries : []);
     const tokenEntry = tokens[0];
 
     if (!tokenEntry) {
       throw new Error('Invalid or expired refresh token');
     }
 
-    const user = await this.app.service('users').get(tokenEntry.userId);
+    // Lấy user
+    let user = await this.app.service('users').get(tokenEntry.userId);
+    // UnWrap user if it was wrapped by wrapResult hook
+    if (user && (user as any).status && (user as any).data) {
+      user = (user as any).data;
+    }
 
-    // Tạo access token mới (dùng hàm nội bộ của auth service)
+    if (!user || !(user as any)._id) {
+       throw new Error('User not found for this token');
+    }
+
+    // Tạo access token mới
     const authService = (this.app.service('authentication') as any);
-    const accessToken = await authService.createAccessToken({ sub: user._id.toString() });
+    const accessToken = await authService.createAccessToken({ sub: (user as any)._id.toString() });
 
     // Rotate refresh token
     await this.app.service('tokens').remove(tokenEntry._id);
@@ -40,14 +52,18 @@ export class RefreshTokenService {
 
     await this.app.service('tokens').create({
       token: newRefresh,
-      userId: user._id.toString(),
+      userId: (user as any)._id.toString(),
       expiresAt: expires.toISOString()
     });
 
-    return {
+    const result = {
       accessToken,
       refreshToken: newRefresh,
       user
     };
+
+    console.log('[DEBUG] RefreshTokenService.create success, returned data for user:', (user as any).phoneNumber || (user as any)._id);
+    
+    return result;
   }
 }
