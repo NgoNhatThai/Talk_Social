@@ -59,7 +59,7 @@ export class RefreshTokenService {
     const result = {
       accessToken,
       refreshToken: newRefresh,
-      user
+      user: typeof (user as any).toObject === 'function' ? (user as any).toObject() : user
     };
 
     console.log('[DEBUG] RefreshTokenService.create success, returned data for user:', (user as any).phoneNumber || (user as any)._id);

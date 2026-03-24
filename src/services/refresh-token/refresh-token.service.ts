@@ -15,15 +15,16 @@ export const refreshToken = (app: Application) => {
     before: {
       all: []
     },
-    after: {
-      all: [
-        async (context) => {
-          if (context.params.provider && context.result) {
-            console.log('[DEBUG] refresh-token after hook: result present');
+      after: {
+        all: [
+          async (context) => {
+            if (context.params.provider && context.result) {
+              console.log('[DEBUG] refresh-token after hook: result present');
+            }
+            return context
           }
-        }
-      ]
-    },
+        ]
+      },
     error: {
       all: []
     }

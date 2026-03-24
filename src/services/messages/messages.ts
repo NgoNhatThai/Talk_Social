@@ -74,12 +74,15 @@ export const messages = (app: Application) => {
         // messagePatchValidator,
         schemaHooks.resolveData(messagePatchResolver),
         async (context: any) => {
-          // Add current user to readBy array if 'seen' behavior
-          if (context.data && context.data.readBy) {
+          // If isSeen is true, add current user to readBy array
+          if (context.data && (context.data.isSeen || context.data.readBy)) {
              const message = await context.service.get(context.id as string)
              const readBy = new Set(message.readBy.map((id: any) => id.toString()))
              readBy.add(context.params.user?._id.toString())
              context.data.readBy = Array.from(readBy)
+             // Remove isSeen from data before it hits the database
+             delete context.data.isSeen
+             console.log(`[DEBUG messages] Before patch: user ${context.params.user?._id} is marking message ${context.id} as read`)
           }
         }
       ],
@@ -90,8 +93,8 @@ export const messages = (app: Application) => {
         async (context: any) => {
           // Update lastMessageId in the room for quick listing
           const result = context.result as any
-          // Use _patch to avoid any hook issues in rooms service
-          await (context.app.service('rooms') as any)._patch(result.roomId, {
+          // Use .patch to ensure hooks are run and events are emitted
+          await context.app.service('rooms').patch(result.roomId, {
             lastMessageId: result._id,
             lastMessageAt: result.createdAt || new Date().toISOString(),
             lastMessageContent: result.text,
@@ -99,7 +102,7 @@ export const messages = (app: Application) => {
             lastMessageReadBy: result.readBy
           }, {
             ...context.params,
-            provider: undefined // Ensure internal call
+            provider: undefined // Ensure internal call but trigger events
           })
           
           // Note: Feathers automatically emits the 'created' event after this hook finishes.
@@ -110,19 +113,28 @@ export const messages = (app: Application) => {
         async (context: any) => {
            // Sync readBy to room if this is the last message
            const result = context.result as any
-           if (context.data && context.data.readBy) {
+           
+           console.log(`[DEBUG messages] After patch message: ${result._id}, room: ${result.roomId}`)
+           
+           try {
               const room = await (context.app.service('rooms') as any)._get(result.roomId, {
                  ...context.params,
                  provider: undefined
               })
+              
+              console.log(`[DEBUG messages] Room ${result.roomId} lastMessageId: ${room.lastMessageId}, current message: ${result._id}`)
+              
               if (room.lastMessageId?.toString() === result._id.toString()) {
-                 await (context.app.service('rooms') as any)._patch(result.roomId, {
-                   lastMessageReadBy: context.data.readBy
+                 console.log(`[DEBUG messages] Syncing readBy to room ${result.roomId} with ${result.readBy?.length || 0} readers`)
+                 await (context.app.service('rooms') as any).patch(result.roomId, {
+                   lastMessageReadBy: result.readBy
                  }, {
                    ...context.params,
                    provider: undefined
                  })
               }
+           } catch (err) {
+              console.error(`[DEBUG messages] Error during room sync: ${err}`)
            }
         }
       ]

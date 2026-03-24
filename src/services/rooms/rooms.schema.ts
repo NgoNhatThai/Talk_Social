@@ -15,7 +15,10 @@ export const roomSchema = Type.Object(
     }),
     name: Type.Optional(Type.String()),
     lastMessageId: Type.Optional(Type.String()),
-    lastMessageAt: Type.Optional(Type.String())
+    lastMessageAt: Type.Optional(Type.String()),
+    lastMessageContent: Type.Optional(Type.String()),
+    lastMessageSenderId: Type.Optional(Type.String()),
+    lastMessageReadBy: Type.Optional(Type.Array(Type.String()))
   },
   { $id: 'Room', additionalProperties: true }
 )

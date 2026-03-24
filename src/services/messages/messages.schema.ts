@@ -46,7 +46,12 @@ export const messageDataResolver = resolve<MessageData, HookContext>({
 
 // Schema for updating existing entries
 export const messagePatchSchema = Type.Partial(
-  Type.Pick(messageSchema, ['readBy', 'text', 'updatedAt']),
+  Type.Intersect([
+    Type.Pick(messageSchema, ['readBy', 'text', 'updatedAt']),
+    Type.Object({
+      isSeen: Type.Optional(Type.Boolean())
+    })
+  ]),
   { $id: 'MessagePatch' }
 )
 export type MessagePatch = Static<typeof messagePatchSchema>

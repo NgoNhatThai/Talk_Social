@@ -125,6 +125,7 @@ export const rooms = (app: Application) => {
       patch: [
         async (context: any) => {
           const room = context.result as any
+          console.log(`[DEBUG rooms] After patch: room ${room._id}, populating last message`)
           if (room.lastMessageId) {
              try {
                 const message = await context.app.service('messages').get(room.lastMessageId, {
