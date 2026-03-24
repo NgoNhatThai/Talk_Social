@@ -79,10 +79,10 @@ export const rooms = (app: Application) => {
           
           if (!Array.isArray(rooms)) return context
 
-          const populateLastMessage = async (room: any) => {
+          const populateData = async (room: any) => {
+             // 1. Populate last message details
              if (room.lastMessageId) {
                 try {
-                   // Use _get to bypass hooks in messages service if needed
                    const message = await context.app.service('messages').get(room.lastMessageId, {
                       ...context.params,
                       provider: undefined
@@ -95,13 +95,35 @@ export const rooms = (app: Application) => {
                    // Last message might be deleted or not found
                 }
              }
+
+             // 2. Populate dynamic room name (and avatar) for direct chats
+             if (room.type === 'direct' && Array.isArray(room.participantIds)) {
+                const currentUserId = context.params.user?._id?.toString()
+                const otherUserIdRaw = room.participantIds.find((id: any) => id.toString() !== currentUserId)
+                
+                if (otherUserIdRaw) {
+                   try {
+                      // Import inside or ensure ObjectId is available globally
+                      const { ObjectId } = require('mongodb')
+                      const otherUserId = typeof otherUserIdRaw === 'string' ? new ObjectId(otherUserIdRaw) : otherUserIdRaw
+                      
+                      const otherUser = await (context.app.service('users') as any)._get(otherUserId)
+                      room.name = otherUser?.username || otherUser?.phoneNumber || 'Unknown'
+                      if (otherUser?.avatar) {
+                         room.avatar = otherUser.avatar
+                      }
+                   } catch (err: any) {
+                      // Do not log Not Found errors as they are expected if a user is deleted
+                   }
+                }
+             }
              return room
           }
 
           if (result.data) {
-             result.data = await Promise.all(result.data.map(populateLastMessage))
+             result.data = await Promise.all(result.data.map(populateData))
           } else {
-             context.result = await Promise.all(result.map(populateLastMessage))
+             context.result = await Promise.all(result.map(populateData))
           }
         }
       ],
@@ -119,6 +141,25 @@ export const rooms = (app: Application) => {
                 room.lastMessageSenderId = message.senderId
                 room.lastMessageReadBy = message.readBy
              } catch (err) {}
+          }
+          if (room.type === 'direct' && Array.isArray(room.participantIds)) {
+             const currentUserId = context.params.user?._id?.toString()
+             const otherUserIdRaw = room.participantIds.find((id: any) => id.toString() !== currentUserId)
+             
+             if (otherUserIdRaw) {
+                try {
+                   const { ObjectId } = require('mongodb')
+                   const otherUserId = typeof otherUserIdRaw === 'string' ? new ObjectId(otherUserIdRaw) : otherUserIdRaw
+                   
+                   const otherUser = await (context.app.service('users') as any)._get(otherUserId)
+                   room.name = otherUser?.username || otherUser?.phoneNumber || 'Unknown'
+                   if (otherUser?.avatar) {
+                      room.avatar = otherUser.avatar
+                   }
+                } catch (err: any) {
+                   // Do not log Not Found errors as they are expected if a user is deleted
+                }
+             }
           }
         }
       ],

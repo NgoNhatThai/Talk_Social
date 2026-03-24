@@ -10,12 +10,17 @@ export const messageSchema = Type.Object(
     _id: ObjectIdSchema(),
     senderId: ObjectIdSchema(),
     roomId: ObjectIdSchema(),
-    text: Type.String(),
+    text: Type.Optional(Type.String()),
     type: Type.Enum({
       text: 'text',
       image: 'image',
-      file: 'file'
+      file: 'file',
+      voice: 'voice'
     }),
+    mediaUrl: Type.Optional(Type.String()),
+    mediaName: Type.Optional(Type.String()),
+    mediaSize: Type.Optional(Type.Number()),
+    duration: Type.Optional(Type.Number()), // For voice messages in seconds
     replyToId: Type.Optional(ObjectIdSchema()),
     readBy: Type.Array(ObjectIdSchema()),
     createdAt: Type.String(),
@@ -30,7 +35,7 @@ export const messageResolver = resolve<Message, HookContext>({})
 export const messageExternalResolver = resolve<Message, HookContext>({})
 
 // Schema for creating new entries
-export const messageDataSchema = Type.Pick(messageSchema, ['roomId', 'text', 'type', 'replyToId', 'senderId', 'readBy', 'createdAt', 'updatedAt'], {
+export const messageDataSchema = Type.Pick(messageSchema, ['roomId', 'text', 'type', 'replyToId', 'senderId', 'readBy', 'createdAt', 'updatedAt', 'mediaUrl', 'mediaName', 'mediaSize', 'duration'], {
   $id: 'MessageData'
 })
 export type MessageData = Static<typeof messageDataSchema>
