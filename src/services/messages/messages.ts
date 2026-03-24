@@ -137,6 +137,22 @@ export const messages = (app: Application) => {
               console.error(`[DEBUG messages] Error during room sync: ${err}`)
            }
         }
+      ],
+      typing: [
+        (context: any) => {
+          const result = context.result?.data || context.result
+          console.log(`[DEBUG messages] Emitting typing event for room: ${result?.roomId} by user: ${result?.userId}`)
+          context.service.emit('typing', result)
+          return context
+        }
+      ],
+      stopTyping: [
+        (context: any) => {
+          const result = context.result?.data || context.result
+          console.log(`[DEBUG messages] Emitting stopTyping event for room: ${result?.roomId} by user: ${result?.userId}`)
+          context.service.emit('stopTyping', result)
+          return context
+        }
       ]
     }
   })

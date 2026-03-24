@@ -22,19 +22,17 @@ export const channels = (app: Application) => {
       app.channel('authenticated').join(connection)
 
       // Handle wrapped authResult from wrapResult hook
-      const result = authResult.data || authResult
+      // Try to get result deeply to bypass any wrapping
+      const result = authResult.data?.data || authResult.data || authResult
       const user = result.user?.data || result.user
 
       if (user && user._id) {
         const userId = user._id.toString()
-        console.log(`[DEBUG channels] Joining user ${userId} to their specific channel`)
+        console.log(`[DEBUG channels] Connection ${connection.id} of user ${userId} joined their specific channel`)
         // Join a channel for this specific user ID
         app.channel(`userIds/${userId}`).join(connection)
       } else {
-        console.warn('[DEBUG channels] Login event received but user ID not found in authResult', {
-          hasData: !!authResult.data,
-          hasUser: !!result.user
-        })
+        console.warn('[DEBUG channels] Login event received but user ID not found in authResult', JSON.stringify(authResult).substring(0, 500))
       }
     }
   })
@@ -45,28 +43,28 @@ export const channels = (app: Application) => {
     // Handle wrapped result from wrapResult hook
     const actualData = data.data || data
     
-    // Check if we have a roomId
-    if (!actualData.roomId) {
-      console.warn('[DEBUG channels] Message data has no roomId, skipping publish', { 
-        hasWrapper: !!data.data,
-        keys: Object.keys(actualData) 
-      })
+    // Check if we have a roomId (supports created event and typing events)
+    const roomId = actualData.roomId || (data.result && data.result.roomId)
+    
+    if (!roomId) {
+      console.warn('[DEBUG channels] Message data has no roomId, skipping publish', JSON.stringify(data).substring(0, 200))
       return []
     }
 
     try {
       // Use _get to bypass hooks that might fail or cause recursion in publisher
-      const room = await (app.service('rooms') as any)._get(actualData.roomId)
+      const roomIdStr = (roomId as any).toString()
+      const room = await (app.service('rooms') as any)._get(roomIdStr)
       
       if (!room || !room.participantIds) {
-        console.warn(`[DEBUG channels] Room ${actualData.roomId} not found or has no participants`)
+        console.warn(`[DEBUG channels] Room ${roomIdStr} not found or has no participants`)
         return []
       }
 
-      if (room.participantIds.length > 0) {
-        console.log(`[DEBUG channels] Publishing 'messages created' to ${room.participantIds.length} participants in room ${actualData.roomId}`)
-      }
-      return room.participantIds.map((id: any) => app.channel(`userIds/${id.toString()}`))
+      const participantIds = room.participantIds || []
+      console.log(`[DEBUG channels] Publishing 'messages' event to ${participantIds.length} users in room ${roomIdStr}`)
+      
+      return participantIds.map((id: any) => app.channel(`userIds/${id.toString()}`))
     } catch (error: any) {
       console.error(`[DEBUG channels] Error publishing message: ${error.message}`)
       return []

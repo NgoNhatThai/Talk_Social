@@ -14,13 +14,26 @@ export const friendRequestSchema = Type.Object(
       pending: 'pending',
       accepted: 'accepted',
       rejected: 'rejected'
-    })
+    }),
+    fromUser: Type.Optional(Type.Any())
   },
   { $id: 'FriendRequest', additionalProperties: false }
 )
 export type FriendRequest = Static<typeof friendRequestSchema>
 export const friendRequestValidator = getValidator(friendRequestSchema, dataValidator)
-export const friendRequestResolver = resolve<FriendRequest, HookContext>({})
+export const friendRequestResolver = resolve<FriendRequest, HookContext>({
+  properties: {
+    fromUser: async (_value, data, context) => {
+      if (data.fromUserId) {
+        try {
+          return await context.app.service('users').get(data.fromUserId as any)
+        } catch (err) {
+          return undefined
+        }
+      }
+    }
+  }
+})
 
 export const friendRequestExternalResolver = resolve<FriendRequest, HookContext>({})
 

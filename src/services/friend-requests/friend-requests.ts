@@ -31,7 +31,20 @@ export const friendRequests = (app: Application) => {
       all: [],
       find: [
         // friendRequestQueryValidator,
-        schemaHooks.resolveQuery(friendRequestQueryResolver)
+        schemaHooks.resolveQuery(friendRequestQueryResolver),
+        async (context: any) => {
+          if (context.params.provider) {
+            const userId = context.params.user?._id
+            
+            // If No filter is provided, default to requests involving this user
+            if (!context.params.query.fromUserId && !context.params.query.toUserId) {
+              context.params.query.$or = [
+                { fromUserId: userId },
+                { toUserId: userId }
+              ]
+            }
+          }
+        }
       ],
       get: [
         // friendRequestQueryValidator,
@@ -39,7 +52,33 @@ export const friendRequests = (app: Application) => {
       ],
       create: [
         schemaHooks.resolveData(friendRequestDataResolver),
-        // friendRequestDataValidator 
+        // friendRequestDataValidator,
+        async (context: any) => {
+          const { fromUserId, toUserId } = context.data
+          if (!fromUserId || !toUserId) return;
+
+          if (fromUserId.toString() === toUserId.toString()) {
+            throw new Error('You cannot send a friend request to yourself')
+          }
+
+          // Duplicate check
+          const existing = await context.service.find({
+            query: {
+              $or: [
+                { fromUserId, toUserId },
+                { fromUserId: toUserId, toUserId: fromUserId }
+              ],
+              status: { $in: ['pending', 'accepted'] },
+              $limit: 1
+            },
+            paginate: false
+          }) as any
+
+          const records = Array.isArray(existing) ? existing : (existing.data || [])
+          if (records.length > 0) {
+            throw new Error('A friend request already exists between these users')
+          }
+        }
       ],
       patch: [
         schemaHooks.resolveData(friendRequestPatchResolver),
